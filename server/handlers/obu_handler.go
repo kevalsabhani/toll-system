@@ -3,51 +3,57 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"fmt"
 	"net/http"
 
 	"github.com/kevalsabhani/toll-calculator/client/obu"
 	"github.com/segmentio/kafka-go"
+	"go.uber.org/zap"
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
 )
 
+// OBUHandler contains connections and zap logger object
 type OBUHandler struct {
 	wsConn    *websocket.Conn
 	kafkaConn *kafka.Conn
+	logger    *zap.Logger
 }
 
-func NewOBUHandler(conn *kafka.Conn) *OBUHandler {
+// NewOBUHandler return an object of OBUHandler
+func NewOBUHandler(conn *kafka.Conn, logger *zap.Logger) *OBUHandler {
 	return &OBUHandler{
 		kafkaConn: conn,
+		logger:    logger,
 	}
 }
 
+// HandleWS handles websocket connection
 func (h *OBUHandler) HandleWS(w http.ResponseWriter, r *http.Request) {
 	conn, err := websocket.Accept(w, r, nil)
 	if err != nil {
-		log.Fatal(err)
+		h.logger.Fatal(err.Error())
 	}
 
 	h.wsConn = conn
 	go func() {
-		log.Println("New OBU client connected...")
+		h.logger.Debug("New OBU client connected...")
 		for {
 			var data obu.OBUData
 			if err := wsjson.Read(context.Background(), h.wsConn, &data); err != nil {
-				log.Println("Read error: ", err)
+				h.logger.Error(fmt.Sprintf("Read error: %s", err.Error()))
 				continue
 			}
-			log.Println("Received OBU data: ", data)
+			h.logger.Info("OBU Data Received", zap.Int("obuId", data.OBUId))
 			dataBytes, err := json.Marshal(data)
 			if err != nil {
-				log.Println("Failed to marshal obu data: ", err)
+				h.logger.Error(fmt.Sprintf("Marshal error: %s", err.Error()))
 				continue
 			}
 
 			_, err = h.kafkaConn.Write(dataBytes)
 			if err != nil {
-				log.Println("Failed to write message:", err)
+				h.logger.Error(err.Error())
 			}
 		}
 	}()

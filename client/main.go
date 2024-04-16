@@ -7,20 +7,31 @@ package main
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/kevalsabhani/toll-calculator/client/obu"
+	"go.uber.org/zap"
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
 )
 
-var wsEndpoint = "ws://localhost:8080"
+const (
+	ENV        = "DEVELOPMENT"
+	wsEndpoint = "ws://localhost:8080"
+)
 
 func main() {
+
+	//zap logger
+	logger := zap.Must(zap.NewProduction())
+	if ENV == "DEVELOPMENT" {
+		logger = zap.Must(zap.NewDevelopment())
+	}
+
+	// websocket connection
 	conn, _, err := websocket.Dial(context.Background(), wsEndpoint, nil)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err.Error())
 	}
 	defer conn.CloseNow()
 
@@ -28,9 +39,9 @@ func main() {
 	for {
 		for i := 0; i < 20; i++ {
 			obuData := obu.NewOBUData()
-			log.Println("Sending OBU data: ", obuData)
+			logger.Info("Sending OBU data", zap.Any("obu", obuData))
 			wsjson.Write(context.Background(), conn, obuData)
 		}
-		time.Sleep(time.Second)
+		time.Sleep(5 * time.Second)
 	}
 }

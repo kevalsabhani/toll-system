@@ -4,37 +4,39 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/kevalsabhani/toll-calculator/server/handlers"
 	"github.com/segmentio/kafka-go"
+	"go.uber.org/zap"
 )
 
+const ENV = "DEVELOPMENT"
+
 func main() {
+	//zap logger
+	logger := zap.Must(zap.NewProduction())
+	if ENV == "DEVELOPMENT" {
+		logger = zap.Must(zap.NewDevelopment())
+	}
 
-	// configure kafka produucer
-	topic := "obu-data"
-	partition := 0
-
-	conn, err := kafka.DialLeader(context.Background(), "tcp", "localhost:9092", topic, partition)
+	// kafka producer
+	kafkaConn, err := configureKafkaProducer()
 	if err != nil {
 		log.Fatal("failed to dial leader:", err)
 	}
-	conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-	// _, err = conn.WriteMessages(
-	// 	kafka.Message{Value: []byte("one!")},
-	// 	kafka.Message{Value: []byte("two!")},
-	// 	kafka.Message{Value: []byte("three!")},
-	// )
-	// if err != nil {
-	// 	log.Fatal("failed to write messages:", err)
-	// }
+	logger.Debug("Kafka connected...")
 
-	// if err := conn.Close(); err != nil {
-	// 	log.Fatal("failed to close writer:", err)
-	// }
+	obuHandler := handlers.NewOBUHandler(kafkaConn, logger)
 
-	obuHandler := handlers.NewOBUHandler(conn)
+	//routes
 	http.HandleFunc("/", obuHandler.HandleWS)
+	logger.Info("Listening on port 8080...")
 	http.ListenAndServe(":8080", nil)
+}
+
+// configureKafkaProducer returns kafka connection object
+func configureKafkaProducer() (*kafka.Conn, error) {
+	topic := "obu-data"
+	partition := 0
+	return kafka.DialLeader(context.Background(), "tcp", "localhost:9092", topic, partition)
 }
