@@ -9,7 +9,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/kevalsabhani/toll-calculator/client/obu"
+	"github.com/kevalsabhani/toll-calculator/client/services"
 	"go.uber.org/zap"
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
@@ -38,7 +38,7 @@ func main() {
 	// Sending OBU data to server
 	for {
 		for i := 0; i < 20; i++ {
-			obuData := obu.NewOBUData()
+			obuData := services.NewOBUData()
 			logger.Info("Sending OBU data", zap.Any("obu", obuData))
 			wsjson.Write(context.Background(), conn, obuData)
 		}

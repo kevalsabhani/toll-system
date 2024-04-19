@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/kevalsabhani/toll-calculator/client/obu"
+	"github.com/kevalsabhani/toll-calculator/client/services"
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 	"nhooyr.io/websocket"
@@ -39,7 +39,7 @@ func (h *OBUHandler) HandleWS(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		h.logger.Debug("New OBU client connected...")
 		for {
-			var data obu.OBUData
+			var data services.OBUData
 			if err := wsjson.Read(context.Background(), h.wsConn, &data); err != nil {
 				h.logger.Error(fmt.Sprintf("Read error: %s", err.Error()))
 				continue
