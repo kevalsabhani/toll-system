@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/kevalsabhani/toll-calculator/invoice_generator/utils"
 	"go.uber.org/zap"
 )
 
@@ -33,7 +34,7 @@ func (da *DistanceAggregator) AggregateDistance(w http.ResponseWriter, r *http.R
 			"error":   err.Error(),
 			"message": "",
 		}
-		writeJsonResponse(w, http.StatusBadRequest, res)
+		utils.WriteJsonResponse(w, http.StatusBadRequest, res)
 		return
 	}
 	da.store.Insert(data)
@@ -41,11 +42,5 @@ func (da *DistanceAggregator) AggregateDistance(w http.ResponseWriter, r *http.R
 		"error":   "",
 		"message": "Distance added successfully",
 	}
-	writeJsonResponse(w, http.StatusOK, res)
-}
-
-func writeJsonResponse(w http.ResponseWriter, status int, v any) {
-	w.WriteHeader(status)
-	w.Header().Add("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(v)
+	utils.WriteJsonResponse(w, http.StatusOK, res)
 }

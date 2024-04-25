@@ -6,20 +6,20 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/kevalsabhani/toll-calculator/distance_aggregator/handlers"
+	"github.com/kevalsabhani/toll-calculator/invoice_generator/handlers"
 )
 
-type DistanceAggregatorClient struct {
+type InvoiceGeneratorClient struct {
 	AggregatorEndpoint string
 }
 
-func NewDistanceAggregatorClient(endpoint string) *DistanceAggregatorClient {
-	return &DistanceAggregatorClient{
+func NewInvoiceGeneratorClient(endpoint string) *InvoiceGeneratorClient {
+	return &InvoiceGeneratorClient{
 		AggregatorEndpoint: endpoint,
 	}
 }
 
-func (dac *DistanceAggregatorClient) PostDistanceData(distance *handlers.Distance) error {
+func (igc *InvoiceGeneratorClient) PostDistanceData(distance *handlers.Distance) error {
 	client := &http.Client{}
 
 	distanceBytes, err := json.Marshal(distance)
@@ -27,7 +27,7 @@ func (dac *DistanceAggregatorClient) PostDistanceData(distance *handlers.Distanc
 		return err
 	}
 
-	req, err := http.NewRequest("POST", dac.AggregatorEndpoint, bytes.NewReader(distanceBytes))
+	req, err := http.NewRequest("POST", igc.AggregatorEndpoint, bytes.NewReader(distanceBytes))
 	if err != nil {
 		return err
 	}

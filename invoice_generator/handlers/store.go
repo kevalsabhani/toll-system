@@ -1,9 +1,14 @@
 package handlers
 
-import "go.uber.org/zap"
+import (
+	"fmt"
+
+	"go.uber.org/zap"
+)
 
 type Store interface {
 	Insert(*Distance)
+	Get(int) (float64, error)
 }
 
 type MemoryStore struct {
@@ -25,4 +30,12 @@ func (ms *MemoryStore) Insert(d *Distance) {
 		zap.Int("obuId", d.OBUId),
 		zap.Float64("distance", d.Value),
 	)
+}
+
+func (ms *MemoryStore) Get(obuId int) (float64, error) {
+	totalDistance, ok := ms.DistanceData[obuId]
+	if !ok {
+		return 0.0, fmt.Errorf("OBUId [%d] not found", obuId)
+	}
+	return totalDistance, nil
 }

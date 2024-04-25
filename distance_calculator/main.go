@@ -8,15 +8,15 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/kevalsabhani/toll-calculator/distance_aggregator/client"
-	"github.com/kevalsabhani/toll-calculator/distance_aggregator/handlers"
 	"github.com/kevalsabhani/toll-calculator/distance_calculator/services"
+	"github.com/kevalsabhani/toll-calculator/invoice_generator/client"
+	"github.com/kevalsabhani/toll-calculator/invoice_generator/handlers"
 	"go.uber.org/zap"
 )
 
 const (
-	env                    = "DEVELOPMENT"
-	distanceAggregatorHost = "http://localhost:3000"
+	env                  = "DEVELOPMENT"
+	invoiceGeneratorHost = "http://localhost:3000"
 )
 
 func main() {
@@ -32,8 +32,8 @@ func main() {
 
 	consumer := services.NewKafkaConsumer(logger)
 
-	aggregatorClient := client.NewDistanceAggregatorClient(
-		fmt.Sprintf("%s/aggregate", distanceAggregatorHost),
+	aggregatorClient := client.NewInvoiceGeneratorClient(
+		fmt.Sprintf("%s/aggregate_distance", invoiceGeneratorHost),
 	)
 
 	// Loop to read messages

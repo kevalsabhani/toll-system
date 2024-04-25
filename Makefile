@@ -14,8 +14,8 @@ distance_cal:
 	@go build -o bin/distance_calculator distance_calculator/main.go
 	@./bin/distance_calculator
 
-distance_agg:
-	@go build -o bin/distance_aggregator distance_aggregator/main.go
-	@./bin/distance_aggregator
+invoice:
+	@go build -o bin/invoice_generator invoice_generator/main.go
+	@./bin/invoice_generator
 
-.PHONY: obuclient obuserver kafka distance_cal distance_agg
+.PHONY: obuclient obuserver kafka distance_cal invoice
