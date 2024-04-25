@@ -20,5 +20,9 @@ func NewMemoryStore(logger *zap.Logger) *MemoryStore {
 
 func (ms *MemoryStore) Insert(d *Distance) {
 	ms.DistanceData[d.OBUId] += d.Value
-	ms.logger.Info("Distance added to memory", zap.Float64("distance", d.Value))
+	ms.logger.Info(
+		"distance data stored successfully...",
+		zap.Int("obuId", d.OBUId),
+		zap.Float64("distance", d.Value),
+	)
 }

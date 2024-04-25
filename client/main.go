@@ -37,11 +37,14 @@ func main() {
 
 	// Sending OBU data to server
 	for {
-		for i := 0; i < 20; i++ {
-			obuData := services.NewOBUData()
-			logger.Info("Sending OBU data", zap.Any("obu", obuData))
-			wsjson.Write(context.Background(), conn, obuData)
-		}
+		// for i := 0; i < 20; i++ {
+		// 	obuData := services.NewOBUData()
+		// 	logger.Info("Sending OBU data", zap.Any("obu", obuData))
+		// 	wsjson.Write(context.Background(), conn, obuData)
+		// }
+		obuData := services.NewOBUData()
+		logger.Info("Sending OBU data", zap.Any("obu", obuData))
+		wsjson.Write(context.Background(), conn, obuData)
 		time.Sleep(5 * time.Second)
 	}
 }

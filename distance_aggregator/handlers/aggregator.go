@@ -8,8 +8,9 @@ import (
 )
 
 type Distance struct {
-	Value float64 `json:"value"`
-	OBUId int     `json:"obuId"`
+	Value     float64 `json:"value"`
+	OBUId     int     `json:"obuId"`
+	Timestamp int64   `json:"timestamp"`
 }
 
 type DistanceAggregator struct {
@@ -28,8 +29,23 @@ func (da *DistanceAggregator) AggregateDistance(w http.ResponseWriter, r *http.R
 	data := new(Distance)
 	if err := json.NewDecoder(r.Body).Decode(data); err != nil {
 		da.logger.Error(err.Error())
-		w.WriteHeader(http.StatusBadRequest)
+		res := map[string]string{
+			"error":   err.Error(),
+			"message": "",
+		}
+		writeJsonResponse(w, http.StatusBadRequest, res)
 		return
 	}
 	da.store.Insert(data)
+	res := map[string]string{
+		"error":   "",
+		"message": "Distance added successfully",
+	}
+	writeJsonResponse(w, http.StatusOK, res)
+}
+
+func writeJsonResponse(w http.ResponseWriter, status int, v any) {
+	w.WriteHeader(status)
+	w.Header().Add("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(v)
 }

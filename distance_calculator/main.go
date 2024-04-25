@@ -2,17 +2,21 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/kevalsabhani/toll-calculator/distance_aggregator/client"
+	"github.com/kevalsabhani/toll-calculator/distance_aggregator/handlers"
 	"github.com/kevalsabhani/toll-calculator/distance_calculator/services"
 	"go.uber.org/zap"
 )
 
 const (
-	env = "DEVELOPMENT"
+	env                    = "DEVELOPMENT"
+	distanceAggregatorHost = "http://localhost:3000"
 )
 
 func main() {
@@ -28,15 +32,35 @@ func main() {
 
 	consumer := services.NewKafkaConsumer(logger)
 
+	aggregatorClient := client.NewDistanceAggregatorClient(
+		fmt.Sprintf("%s/aggregate", distanceAggregatorHost),
+	)
+
 	// Loop to read messages
 	for {
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-		defer cancel()
-		data := consumer.Read(ctx)
+		// ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		// defer cancel()
+		data := consumer.Read(context.Background())
 
 		// Calculate the distance
 		distance := services.DistanceCal(*data)
-		logger.Info("Distance travelled:", zap.Float64("distance", distance))
+
+		// Post Distance data to distance aggregator service
+		distanceData := handlers.Distance{
+			Value:     distance,
+			OBUId:     data.OBUId,
+			Timestamp: time.Now().UnixNano(),
+		}
+		if err := aggregatorClient.PostDistanceData(&distanceData); err != nil {
+			logger.Error(
+				fmt.Sprintf("failed to post distance for OBUId: %d", data.OBUId),
+			)
+		}
+		logger.Info(
+			"distance data posted successfully...",
+			zap.Float64("distance", distanceData.Value),
+			zap.Int("obuId", distanceData.OBUId),
+		)
 
 		select {
 		case <-sigchan:
