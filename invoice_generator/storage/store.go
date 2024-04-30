@@ -1,13 +1,14 @@
-package handlers
+package storage
 
 import (
 	"fmt"
 
+	"github.com/kevalsabhani/toll-calculator/invoice_generator/types"
 	"go.uber.org/zap"
 )
 
 type Store interface {
-	Insert(*Distance)
+	Insert(*types.Distance)
 	Get(int) (float64, error)
 }
 
@@ -23,7 +24,7 @@ func NewMemoryStore(logger *zap.Logger) *MemoryStore {
 	}
 }
 
-func (ms *MemoryStore) Insert(d *Distance) {
+func (ms *MemoryStore) Insert(d *types.Distance) {
 	ms.DistanceData[d.OBUId] += d.Value
 	ms.logger.Info(
 		"distance data stored successfully...",

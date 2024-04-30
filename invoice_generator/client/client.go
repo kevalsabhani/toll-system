@@ -6,7 +6,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/kevalsabhani/toll-calculator/invoice_generator/handlers"
+	"github.com/kevalsabhani/toll-calculator/invoice_generator/types"
 )
 
 type InvoiceGeneratorClient struct {
@@ -19,7 +19,7 @@ func NewInvoiceGeneratorClient(endpoint string) *InvoiceGeneratorClient {
 	}
 }
 
-func (igc *InvoiceGeneratorClient) PostDistanceData(distance *handlers.Distance) error {
+func (igc *InvoiceGeneratorClient) PostDistanceData(distance *types.Distance) error {
 	client := &http.Client{}
 
 	distanceBytes, err := json.Marshal(distance)

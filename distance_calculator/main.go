@@ -10,7 +10,7 @@ import (
 
 	"github.com/kevalsabhani/toll-calculator/distance_calculator/services"
 	"github.com/kevalsabhani/toll-calculator/invoice_generator/client"
-	"github.com/kevalsabhani/toll-calculator/invoice_generator/handlers"
+	"github.com/kevalsabhani/toll-calculator/invoice_generator/types"
 	"go.uber.org/zap"
 )
 
@@ -46,7 +46,7 @@ func main() {
 		distance := services.DistanceCal(*data)
 
 		// Post Distance data to distance aggregator service
-		distanceData := handlers.Distance{
+		distanceData := types.Distance{
 			Value:     distance,
 			OBUId:     data.OBUId,
 			Timestamp: time.Now().UnixNano(),

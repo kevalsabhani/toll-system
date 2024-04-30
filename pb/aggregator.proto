@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "github.com/kevalsabhani/toll-calculator/pb";
+
+message AggregateDistanceRequest {
+    double Value = 1;
+    int64 OBUId = 2;
+    int64 Timestamp = 3;
+}
+
+message AggregateDistanceResponse {
+    string Message = 1;
+}
+
+
+message GenerateInvoiceRequest {
+    int64 OBUId = 1;
+}
+
+message GenerateInvoiceResponse {
+	int64 OBUId = 1;
+	double TotalDistance = 2;
+	double Amount = 3;
+}
+
+service InvoiceService {
+    rpc AggregateDistance(AggregateDistanceRequest) returns (AggregateDistanceResponse) {}
+    rpc GenerateInvoice(GenerateInvoiceRequest) returns (GenerateInvoiceResponse) {}
+}
+
+

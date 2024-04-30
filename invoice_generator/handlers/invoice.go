@@ -4,22 +4,18 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/kevalsabhani/toll-calculator/invoice_generator/storage"
+	"github.com/kevalsabhani/toll-calculator/invoice_generator/types"
 	"github.com/kevalsabhani/toll-calculator/invoice_generator/utils"
 	"go.uber.org/zap"
 )
 
-type Invoice struct {
-	OBUId         int     `json:"obuId"`
-	TotalDistance float64 `json:"totalDistance"`
-	Amount        float64 `json:"amount"`
-}
-
 type InvoiceGenerator struct {
-	store  Store
+	store  storage.Store
 	logger *zap.Logger
 }
 
-func NewInvoiceGenerator(store Store, logger *zap.Logger) *InvoiceGenerator {
+func NewInvoiceGenerator(store storage.Store, logger *zap.Logger) *InvoiceGenerator {
 	return &InvoiceGenerator{
 		store:  store,
 		logger: logger,
@@ -51,7 +47,7 @@ func (ig *InvoiceGenerator) GenerateInvoice(w http.ResponseWriter, r *http.Reque
 		)
 		return
 	}
-	invoice := Invoice{
+	invoice := types.Invoice{
 		OBUId:         obuId,
 		TotalDistance: totalDistance,
 		Amount:        totalDistance * 10.0,

@@ -1,18 +1,24 @@
 package main
 
 import (
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/kevalsabhani/toll-calculator/invoice_generator/grpchandlers"
 	"github.com/kevalsabhani/toll-calculator/invoice_generator/handlers"
+	"github.com/kevalsabhani/toll-calculator/invoice_generator/storage"
+	"github.com/kevalsabhani/toll-calculator/pb"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 )
 
 const (
-	port = ":3000"
-	env  = "DEVELOPMENT"
+	httpPort = ":3000"
+	grpcPort = ":50051"
+	env      = "DEVELOPMENT"
 )
 
 var logger *zap.Logger
@@ -24,7 +30,7 @@ func main() {
 		logger = zap.Must(zap.NewDevelopment())
 	}
 
-	store := handlers.NewMemoryStore(logger)
+	store := storage.NewMemoryStore(logger)
 	aggregator := handlers.NewDistanceAggregator(store, logger)
 	generator := handlers.NewInvoiceGenerator(store, logger)
 
@@ -32,15 +38,33 @@ func main() {
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
+	// Http Transport
 	go makeHttpTransport(aggregator, generator)
+
+	// Grpc Transport
+	makeGrpcTransport(store)
 
 	<-sigchan
 	logger.Info("Closing the server...")
 }
 
 func makeHttpTransport(aggregator *handlers.DistanceAggregator, generator *handlers.InvoiceGenerator) {
-	logger.Info("Http transport running on", zap.String("port", port))
+	logger.Info("Http transport running on", zap.String("port", httpPort))
 	http.HandleFunc("/aggregate_distance", aggregator.AggregateDistance)
 	http.HandleFunc("/invoice", generator.GenerateInvoice)
-	http.ListenAndServe(port, nil)
+	http.ListenAndServe(httpPort, nil)
+}
+
+func makeGrpcTransport(store storage.Store) {
+	logger.Info("Grpc transport running on", zap.String("port", grpcPort))
+	listener, err := net.Listen("tcp", ":50051")
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
+	grpcServer := grpc.NewServer()
+	grpcInvoiceServiceServer := grpchandlers.NewGrpcInvoiceServiceServer(store)
+	pb.RegisterInvoiceServiceServer(grpcServer, grpcInvoiceServiceServer)
+	if err := grpcServer.Serve(listener); err != nil {
+		logger.Fatal(err.Error())
+	}
 }

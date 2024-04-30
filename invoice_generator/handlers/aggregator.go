@@ -4,22 +4,18 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/kevalsabhani/toll-calculator/invoice_generator/storage"
+	"github.com/kevalsabhani/toll-calculator/invoice_generator/types"
 	"github.com/kevalsabhani/toll-calculator/invoice_generator/utils"
 	"go.uber.org/zap"
 )
 
-type Distance struct {
-	Value     float64 `json:"value"`
-	OBUId     int     `json:"obuId"`
-	Timestamp int64   `json:"timestamp"`
-}
-
 type DistanceAggregator struct {
-	store  Store
+	store  storage.Store
 	logger *zap.Logger
 }
 
-func NewDistanceAggregator(store Store, logger *zap.Logger) *DistanceAggregator {
+func NewDistanceAggregator(store storage.Store, logger *zap.Logger) *DistanceAggregator {
 	return &DistanceAggregator{
 		store:  store,
 		logger: logger,
@@ -27,7 +23,7 @@ func NewDistanceAggregator(store Store, logger *zap.Logger) *DistanceAggregator 
 }
 
 func (da *DistanceAggregator) AggregateDistance(w http.ResponseWriter, r *http.Request) {
-	data := new(Distance)
+	data := new(types.Distance)
 	if err := json.NewDecoder(r.Body).Decode(data); err != nil {
 		da.logger.Error(err.Error())
 		res := map[string]string{

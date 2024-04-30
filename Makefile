@@ -18,4 +18,9 @@ invoice:
 	@go build -o bin/invoice_generator invoice_generator/main.go
 	@./bin/invoice_generator
 
+proto:
+	@protoc --go_out=. --go_opt=paths=source_relative \
+    --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+    pb/*.proto
+
 .PHONY: obuclient obuserver kafka distance_cal invoice
