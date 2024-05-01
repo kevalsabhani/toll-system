@@ -44,7 +44,6 @@ func (h *OBUHandler) HandleWS(w http.ResponseWriter, r *http.Request) {
 				h.logger.Error(fmt.Sprintf("Read error: %s", err.Error()))
 				continue
 			}
-			h.logger.Info("OBU Data Received", zap.Int("obuId", data.OBUId))
 			dataBytes, err := json.Marshal(data)
 			if err != nil {
 				h.logger.Error(fmt.Sprintf("Marshal error: %s", err.Error()))
@@ -55,6 +54,7 @@ func (h *OBUHandler) HandleWS(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				h.logger.Error(err.Error())
 			}
+			h.logger.Info("OBU Data Received from client and published to kafka", zap.Int("obuId", data.OBUId))
 		}
 	}()
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -11,15 +12,20 @@ import (
 	"github.com/kevalsabhani/toll-calculator/distance_calculator/services"
 	"github.com/kevalsabhani/toll-calculator/invoice_generator/client"
 	"github.com/kevalsabhani/toll-calculator/invoice_generator/types"
+	"github.com/kevalsabhani/toll-calculator/pb"
 	"go.uber.org/zap"
 )
 
 const (
-	env                  = "DEVELOPMENT"
-	invoiceGeneratorHost = "http://localhost:3000"
+	env                      = "DEVELOPMENT"
+	invoiceGeneratorHttpHost = "http://localhost:3000"
+	invoiceGeneratorGrpcHost = "localhost:50051"
 )
 
 func main() {
+	transportPtr := flag.String("t", "http", "select the transport[http | grcp]")
+	flag.Parse()
+
 	//zap logger
 	logger := zap.Must(zap.NewProduction())
 	if env == "DEVELOPMENT" {
@@ -32,14 +38,24 @@ func main() {
 
 	consumer := services.NewKafkaConsumer(logger)
 
-	aggregatorClient := client.NewInvoiceGeneratorClient(
-		fmt.Sprintf("%s/aggregate_distance", invoiceGeneratorHost),
+	var (
+		invoiceGeneratorHttpClient *client.InvoiceGeneratorClient
+		invoiceGeneratorGrpcClient pb.InvoiceServiceClient
+		err                        error
 	)
+	if *transportPtr == "http" {
+		invoiceGeneratorHttpClient = client.NewInvoiceGeneratorClient(
+			fmt.Sprintf("%s/aggregate_distance", invoiceGeneratorHttpHost),
+		)
+	} else {
+		invoiceGeneratorGrpcClient, err = client.NewInvoiceGeneratorGrpcClient(invoiceGeneratorGrpcHost)
+		if err != nil {
+			logger.Fatal(err.Error())
+		}
+	}
 
 	// Loop to read messages
 	for {
-		// ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		// defer cancel()
 		data := consumer.Read(context.Background())
 
 		// Calculate the distance
@@ -51,13 +67,26 @@ func main() {
 			OBUId:     data.OBUId,
 			Timestamp: time.Now().UnixNano(),
 		}
-		if err := aggregatorClient.PostDistanceData(&distanceData); err != nil {
-			logger.Error(
-				fmt.Sprintf("failed to post distance for OBUId: %d", data.OBUId),
-			)
+
+		if *transportPtr == "http" {
+			if err := invoiceGeneratorHttpClient.PostDistanceData(&distanceData); err != nil {
+				logger.Error(
+					fmt.Sprintf("failed to post distance for OBUId: %d", data.OBUId),
+				)
+			}
+		} else {
+			if _, err := invoiceGeneratorGrpcClient.AggregateDistance(context.Background(), &pb.AggregateDistanceRequest{
+				Value:     distanceData.Value,
+				OBUId:     int64(distanceData.OBUId),
+				Timestamp: distanceData.Timestamp,
+			}); err != nil {
+				logger.Error(err.Error())
+				continue
+			}
 		}
+
 		logger.Info(
-			"distance data posted successfully...",
+			"distance data read from kafka and posted to invoice service successfully...",
 			zap.Float64("distance", distanceData.Value),
 			zap.Int("obuId", distanceData.OBUId),
 		)

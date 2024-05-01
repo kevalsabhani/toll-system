@@ -43,7 +43,7 @@ func main() {
 		// 	wsjson.Write(context.Background(), conn, obuData)
 		// }
 		obuData := services.NewOBUData()
-		logger.Info("Sending OBU data", zap.Any("obu", obuData))
+		logger.Info("Sending OBU data to OBU server", zap.Any("obu", obuData))
 		wsjson.Write(context.Background(), conn, obuData)
 		time.Sleep(5 * time.Second)
 	}

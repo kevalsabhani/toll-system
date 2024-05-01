@@ -12,11 +12,11 @@ obuserver:
 
 distance_cal:
 	@go build -o bin/distance_calculator distance_calculator/main.go
-	@./bin/distance_calculator
+	@./bin/distance_calculator -t grpc
 
 invoice:
 	@go build -o bin/invoice_generator invoice_generator/main.go
-	@./bin/invoice_generator
+	@./bin/invoice_generator -t grpc
 
 proto:
 	@protoc --go_out=. --go_opt=paths=source_relative \

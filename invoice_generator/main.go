@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"net"
 	"net/http"
 	"os"
@@ -24,6 +25,9 @@ const (
 var logger *zap.Logger
 
 func main() {
+	transportPtr := flag.String("t", "http", "select the transport[http | grcp]")
+	flag.Parse()
+
 	//zap logger
 	logger = zap.Must(zap.NewProduction())
 	if env == "DEVELOPMENT" {
@@ -38,11 +42,13 @@ func main() {
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
-	// Http Transport
-	go makeHttpTransport(aggregator, generator)
-
-	// Grpc Transport
-	makeGrpcTransport(store)
+	if *transportPtr == "http" {
+		// Http Transport
+		go makeHttpTransport(aggregator, generator)
+	} else {
+		// Grpc Transport
+		go makeGrpcTransport(store)
+	}
 
 	<-sigchan
 	logger.Info("Closing the server...")
